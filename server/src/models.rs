@@ -73,6 +73,7 @@ pub struct HistoryResponse {
 #[derive(Debug, Serialize, FromRow)]
 pub struct HistoryItem {
     pub id: String,
+    pub content: String,
     pub content_preview: String,
     pub platform: String,
     pub post_id: Option<String>,

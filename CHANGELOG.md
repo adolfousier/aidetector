@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.1] - 2026-02-11
+
+### Changed
+- Updated all dependencies to latest versions (React 19, Vite 7, TypeScript 5.9, Axum 0.8, SQLx 0.8)
+- Platform tag displays "X" instead of "twitter" in history cards
+- Expanded score cards show full post content instead of truncated 150-char preview
+- Score card hover lifts card with visible shadow effect
+- Fullscreen mode uses full viewport width
+- History panel fills full available height in popup and fullscreen
+- Clickable author names linking to platform profiles
+- "View on X/Instagram/LinkedIn" links in expanded card details
+
+### Fixed
+- Popup height only filling ~30% of space (missing #root height in flex chain)
+- Expanded cards still truncating text in popup (CSS fix only applied in fullscreen media query)
+
 ## [0.1.0] - 2026-02-11
 
 ### Added

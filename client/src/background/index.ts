@@ -14,7 +14,8 @@ const CACHE_MAX_SIZE = 200;
 
 async function getSettings(): Promise<ExtensionSettings> {
   const result = await chrome.storage.local.get("settings");
-  return { ...DEFAULT_SETTINGS, ...result.settings };
+  const saved = (result.settings || {}) as Partial<ExtensionSettings>;
+  return { ...DEFAULT_SETTINGS, ...saved };
 }
 
 async function saveSettings(

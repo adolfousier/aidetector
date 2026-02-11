@@ -20,6 +20,7 @@ export interface AnalyzeResponse {
 
 export interface HistoryItem {
   id: string;
+  content: string;
   content_preview: string;
   platform: string;
   post_id: string | null;

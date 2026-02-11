@@ -6,18 +6,47 @@ interface Props {
   item: HistoryItem;
 }
 
+function getPostUrl(item: HistoryItem): string | null {
+  const pid = item.post_id;
+  if (!pid) return null;
+
+  if (item.platform === "twitter" && pid.startsWith("/")) {
+    return `https://x.com${pid}`;
+  }
+  if (item.platform === "linkedin" && pid.startsWith("urn:li:activity:")) {
+    const activityId = pid.replace("urn:li:activity:", "");
+    return `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}`;
+  }
+  if (item.platform === "linkedin" && item.author && item.author !== "unknown") {
+    const slug = item.author.toLowerCase().replace(/\s+/g, "");
+    return `https://www.linkedin.com/in/${slug}`;
+  }
+  if (item.platform === "instagram" && item.author && item.author !== "unknown") {
+    return `https://www.instagram.com/${item.author.replace("@", "")}/`;
+  }
+
+  return null;
+}
+
 export function ScoreCard({ item }: Props) {
   const [expanded, setExpanded] = useState(false);
   const style = getScoreStyle(item.score);
   const signals: string[] = (() => {
     try { return JSON.parse(item.signals); } catch { return []; }
   })();
+  const postUrl = getPostUrl(item);
+
+  function handleClick(e: React.MouseEvent) {
+    // If clicking the link, don't toggle expand
+    if ((e.target as HTMLElement).closest("a")) return;
+    setExpanded(!expanded);
+  }
 
   return (
     <div
-      className="score-card"
+      className={`score-card${expanded ? " score-card--expanded" : ""}`}
       style={{ borderLeftColor: style.color }}
-      onClick={() => setExpanded(!expanded)}
+      onClick={handleClick}
     >
       <div className="score-card-header">
         <span
@@ -27,20 +56,38 @@ export function ScoreCard({ item }: Props) {
           {item.score}/10
         </span>
         <span className="score-label-text">{style.label}</span>
-        <span className="platform-tag">{item.platform}</span>
+        <span className="platform-tag">{item.platform === "twitter" ? "X" : item.platform}</span>
         <span className="expand-icon">{expanded ? "\u25B2" : "\u25BC"}</span>
       </div>
 
       <div className="score-card-author">
-        <span className="author-name">@{item.author || "unknown"}</span>
+        <span className="author-name">
+          {postUrl ? (
+            <a
+              href={postUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="author-link"
+              title={`Open on ${item.platform}`}
+            >
+              @{item.author || "unknown"}
+            </a>
+          ) : (
+            <>@{item.author || "unknown"}</>
+          )}
+        </span>
         <span className="score-time">
           {new Date(item.created_at + "Z").toLocaleString()}
         </span>
       </div>
 
       <div className="score-card-preview">
-        {item.content_preview}
-        {item.content_preview.length >= 148 && "..."}
+        {expanded ? item.content : (
+          <>
+            {item.content_preview}
+            {item.content_preview.length >= 148 && "..."}
+          </>
+        )}
       </div>
 
       {expanded && (
@@ -71,10 +118,16 @@ export function ScoreCard({ item }: Props) {
               </div>
             </div>
           )}
-          {item.post_id && (
+          {postUrl && (
             <div className="detail-row">
-              <span className="detail-label">Post</span>
-              <span className="detail-value detail-postid">{item.post_id}</span>
+              <a
+                href={postUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="detail-link"
+              >
+                View on {item.platform === "twitter" ? "X" : item.platform.charAt(0).toUpperCase() + item.platform.slice(1)}
+              </a>
             </div>
           )}
         </div>

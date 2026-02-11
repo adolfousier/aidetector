@@ -68,7 +68,7 @@ pub async fn insert_analysis_full(
 
 pub async fn get_history(pool: &SqlitePool, limit: i64, offset: i64) -> Result<(Vec<HistoryItem>, i64), sqlx::Error> {
     let items = sqlx::query_as::<_, HistoryItem>(
-        "SELECT id, SUBSTR(content, 1, 150) as content_preview, platform, post_id, author,
+        "SELECT id, content, SUBSTR(content, 1, 150) as content_preview, platform, post_id, author,
                 score, confidence, label, llm_score, heuristic_score, signals, created_at
          FROM analyses
          ORDER BY created_at DESC
