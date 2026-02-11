@@ -1,0 +1,29 @@
+# Environment files with secrets
+.env
+*.env.local
+server/.env
+
+# Rust
+server/target/
+server/data.db
+server/data.db-wal
+server/data.db-shm
+
+# Node
+client/node_modules/
+client/dist/
+client/package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tasks (local only)
+tasks/

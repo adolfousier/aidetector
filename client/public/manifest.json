@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "AI Content Detector",
+  "version": "0.1.0",
+  "description": "Detect AI-generated content on social media platforms",
+  "permissions": ["storage", "activeTab", "tabs"],
+  "host_permissions": [
+    "*://twitter.com/*",
+    "*://x.com/*",
+    "*://www.instagram.com/*",
+    "*://www.linkedin.com/*",
+    "*://linkedin.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://twitter.com/*",
+        "*://x.com/*",
+        "*://www.instagram.com/*",
+        "*://www.linkedin.com/*",
+        "*://linkedin.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "aidetector@local",
+      "strict_min_version": "128.0"
+    }
+  }
+}

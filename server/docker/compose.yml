@@ -1,0 +1,19 @@
+services:
+  server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+      - DATABASE_URL=sqlite:/data/data.db
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_API_MODEL=${OPENROUTER_API_MODEL:-qwen/qwen3-coder}
+      - API_KEY=${API_KEY}
+    volumes:
+      - aidetector-data:/data
+    restart: unless-stopped
+
+volumes:
+  aidetector-data:
