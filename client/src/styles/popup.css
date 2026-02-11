@@ -521,3 +521,180 @@ html, body {
   text-decoration: underline;
   color: #4a4a6e;
 }
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    color: #e0e0e8;
+    background: #111118;
+  }
+
+  .popup-header {
+    background: #0a0a14;
+  }
+
+  .header-count {
+    color: #666688;
+  }
+
+  .status-label {
+    color: #707088;
+  }
+
+  .tabs {
+    background: #1a1a24;
+    border-bottom-color: #2a2a38;
+  }
+
+  .tab {
+    color: #777;
+  }
+
+  .tab.active {
+    color: #e0e0e8;
+    border-bottom-color: #e0e0e8;
+  }
+
+  .tab:hover {
+    background: #222230;
+  }
+
+  .error {
+    background: #2a1515;
+    color: #f87171;
+  }
+
+  .toast {
+    background: #0f2a18;
+    color: #4ade80;
+  }
+
+  .popup-content {
+    background: #111118;
+  }
+
+  .toggle-row {
+    color: #ccc;
+  }
+
+  .slider {
+    background: #444;
+  }
+
+  .platform-toggles h3 {
+    color: #666;
+  }
+
+  .history-toolbar-label {
+    color: #666;
+  }
+
+  .refresh-btn {
+    border-color: #333;
+    color: #999;
+  }
+
+  .refresh-btn:hover {
+    background: #222;
+    border-color: #555;
+    color: #ddd;
+  }
+
+  .empty {
+    color: #666;
+  }
+
+  .score-card {
+    background: #1a1a24;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .score-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    background: #1e1e2a;
+  }
+
+  .score-label-text {
+    color: #ccc;
+  }
+
+  .platform-tag {
+    color: #666;
+  }
+
+  .expand-icon {
+    color: #555;
+  }
+
+  .author-name {
+    color: #aaa;
+  }
+
+  .score-time {
+    color: #555;
+  }
+
+  .score-card-preview {
+    color: #bbb;
+  }
+
+  .score-card-details {
+    border-top-color: #2a2a38;
+  }
+
+  .detail-label {
+    color: #777;
+  }
+
+  .detail-value {
+    color: #ddd;
+  }
+
+  .detail-postid {
+    color: #555;
+  }
+
+  .signal-tag {
+    background: #252530;
+    color: #999;
+  }
+
+  .field label {
+    color: #777;
+  }
+
+  .field input {
+    background: #1a1a24;
+    border-color: #333;
+    color: #ddd;
+  }
+
+  .field input:focus {
+    border-color: #6666aa;
+    box-shadow: 0 0 0 2px rgba(100, 100, 180, 0.15);
+  }
+
+  .save-btn {
+    background: #2a2a4e;
+  }
+
+  .save-btn:hover {
+    background: #3a3a5e;
+  }
+
+  .author-link {
+    color: #aaa;
+  }
+
+  .author-link:hover {
+    color: #ddd;
+  }
+
+  .detail-link {
+    color: #8888cc;
+  }
+
+  .detail-link:hover {
+    color: #aaaaee;
+  }
+}

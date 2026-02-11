@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.11] - 2026-02-11
+
+### Added
+- Dark mode support (follows system appearance via prefers-color-scheme)
+- `justfile` for one-command build and run (`just` or `just run`)
+
+### Changed
+- README rewritten with Quick Start using `just`, manual setup in collapsible section
+
 ## [0.1.1] - 2026-02-11
 
 ### Changed

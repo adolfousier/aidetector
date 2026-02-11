@@ -46,51 +46,39 @@ Chrome/Firefox extension + Rust backend that detects AI-generated content on X/T
 
 - **Rust** (1.75+): https://rustup.rs
 - **Node.js** (18+): https://nodejs.org
+- **just** (command runner): https://just.systems (`cargo install just`)
 - **OpenRouter API key**: https://openrouter.ai/keys
 
-## Setup
-
-### 1. Server
+## Quick Start
 
 ```bash
-cd server
-cp .env.example .env
-# Edit .env — set your OPENROUTER_API_KEY and API_KEY
+git clone https://github.com/adolfousier/aidetector.git
+cd aidetector
+
+# Configure server env
+cp server/.env.example server/.env
+# Edit server/.env — set your OPENROUTER_API_KEY and OPENROUTER_API_MODEL
+
+# Build everything and start the server
+just
 ```
 
-`.env` variables:
+`just` (or `just run`) installs npm dependencies, builds the client extension, compiles the Rust server, and starts it.
 
-| Variable | Required | Description |
-|---|---|---|
-| `PORT` | No (default: `3000`) | Server port |
-| `DATABASE_URL` | No (default: `sqlite:data.db`) | SQLite database path |
-| `OPENROUTER_API_KEY` | **Yes** | Your OpenRouter API key |
-| `OPENROUTER_API_MODEL` | **Yes** | LLM model (e.g. `qwen/qwen3-coder`) |
-| `API_KEY` | No | Extension auth key (leave empty to disable auth) |
+| Command | Description |
+|---|---|
+| `just` / `just run` | Build everything and start the server |
+| `just build` | Build client + server without starting |
+| `just build-client` | Build only the browser extension |
+| `just build-server` | Build only the Rust server |
+| `just stop` | Stop the running server |
+| `just clean` | Stop server and remove all build artifacts |
 
-```bash
-cargo build --release
-cargo run --release
-```
+### Load the Extension
 
-Verify:
+After running `just`, load `client/dist/` in your browser:
 
-```bash
-curl http://localhost:3000/api/health
-# {"status":"ok","version":"0.1.0"}
-```
-
-### 2. Extension
-
-```bash
-cd client
-npm install
-npm run build
-```
-
-Produces `client/dist/` — the loadable extension.
-
-### 3a. Chrome
+#### Chrome
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
@@ -135,6 +123,51 @@ docker compose -f docker/compose.yml up -d
 ```
 
 The server runs on port 3000 with SQLite data persisted in a Docker volume.
+
+## Manual Setup (without just)
+
+<details>
+<summary>Click to expand</summary>
+
+### Environment Variables
+
+Configure in `server/.env`:
+
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | No (default: `3000`) | Server port |
+| `DATABASE_URL` | No (default: `sqlite:data.db`) | SQLite database path |
+| `OPENROUTER_API_KEY` | **Yes** | Your OpenRouter API key |
+| `OPENROUTER_API_MODEL` | **Yes** | LLM model (e.g. `qwen/qwen3-coder`) |
+| `API_KEY` | No | Extension auth key (leave empty to disable auth) |
+
+### Server
+
+```bash
+cd server
+cp .env.example .env
+# Edit .env with your keys
+cargo build
+cargo run
+```
+
+### Extension
+
+```bash
+cd client
+npm install
+npm run build
+```
+
+Produces `client/dist/` — load it in your browser as described in [Quick Start](#quick-start).
+
+### Verify
+
+```bash
+curl http://localhost:3000/api/health
+```
+
+</details>
 
 ## API
 
