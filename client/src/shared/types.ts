@@ -50,16 +50,24 @@ export interface ExtensionSettings {
   };
 }
 
+export interface HistoryQuery {
+  limit?: number;
+  offset?: number;
+  author?: string;
+}
+
 // Chrome message types
 export type MessageType =
   | { type: "ANALYZE"; payload: AnalyzeRequest }
   | { type: "GET_SETTINGS" }
   | { type: "UPDATE_SETTINGS"; payload: Partial<ExtensionSettings> }
-  | { type: "GET_HISTORY" }
+  | { type: "GET_HISTORY"; payload?: HistoryQuery }
+  | { type: "GET_AUTHORS" }
   | { type: "LOG"; payload: string };
 
 export type MessageResponse =
   | { success: true; data: AnalyzeResponse }
   | { success: true; data: ExtensionSettings }
   | { success: true; data: HistoryResponse }
+  | { success: true; data: string[] }
   | { success: false; error: string };

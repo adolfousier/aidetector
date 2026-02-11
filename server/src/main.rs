@@ -53,6 +53,7 @@ async fn main() {
     let protected = Router::new()
         .route("/api/analyze", post(routes::analyze::analyze))
         .route("/api/history", get(routes::history::history))
+        .route("/api/authors", get(routes::history::authors))
         .layer(middleware::from_fn(auth::require_api_key));
 
     let app = Router::new()

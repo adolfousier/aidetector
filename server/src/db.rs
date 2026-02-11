@@ -66,23 +66,58 @@ pub async fn insert_analysis_full(
     Ok(())
 }
 
-pub async fn get_history(pool: &SqlitePool, limit: i64, offset: i64) -> Result<(Vec<HistoryItem>, i64), sqlx::Error> {
-    let items = sqlx::query_as::<_, HistoryItem>(
-        "SELECT id, content, SUBSTR(content, 1, 150) as content_preview, platform, post_id, author,
-                score, confidence, label, llm_score, heuristic_score, signals, created_at
-         FROM analyses
-         ORDER BY created_at DESC
-         LIMIT ? OFFSET ?"
-    )
-    .bind(limit)
-    .bind(offset)
-    .fetch_all(pool)
-    .await?;
+pub async fn get_history(pool: &SqlitePool, limit: i64, offset: i64, author: Option<&str>) -> Result<(Vec<HistoryItem>, i64), sqlx::Error> {
+    let (items, total) = match author {
+        Some(a) => {
+            let items = sqlx::query_as::<_, HistoryItem>(
+                "SELECT id, content, SUBSTR(content, 1, 150) as content_preview, platform, post_id, author,
+                        score, confidence, label, llm_score, heuristic_score, signals, created_at
+                 FROM analyses WHERE author = ?
+                 ORDER BY created_at DESC
+                 LIMIT ? OFFSET ?"
+            )
+            .bind(a)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(pool)
+            .await?;
 
-    let row = sqlx::query("SELECT COUNT(*) as cnt FROM analyses")
-        .fetch_one(pool)
-        .await?;
-    let total: i64 = row.get("cnt");
+            let row = sqlx::query("SELECT COUNT(*) as cnt FROM analyses WHERE author = ?")
+                .bind(a)
+                .fetch_one(pool)
+                .await?;
+            let total: i64 = row.get("cnt");
+            (items, total)
+        }
+        None => {
+            let items = sqlx::query_as::<_, HistoryItem>(
+                "SELECT id, content, SUBSTR(content, 1, 150) as content_preview, platform, post_id, author,
+                        score, confidence, label, llm_score, heuristic_score, signals, created_at
+                 FROM analyses
+                 ORDER BY created_at DESC
+                 LIMIT ? OFFSET ?"
+            )
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(pool)
+            .await?;
+
+            let row = sqlx::query("SELECT COUNT(*) as cnt FROM analyses")
+                .fetch_one(pool)
+                .await?;
+            let total: i64 = row.get("cnt");
+            (items, total)
+        }
+    };
 
     Ok((items, total))
+}
+
+pub async fn get_authors(pool: &SqlitePool) -> Result<Vec<String>, sqlx::Error> {
+    let rows = sqlx::query_scalar::<_, String>(
+        "SELECT DISTINCT author FROM analyses WHERE author IS NOT NULL AND author != 'unknown' ORDER BY author"
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
 }

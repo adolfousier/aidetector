@@ -269,6 +269,50 @@ html, body {
   font-weight: 500;
 }
 
+.author-filter {
+  flex: 1;
+  margin-right: 8px;
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  max-width: 200px;
+}
+
+.author-filter:focus {
+  outline: none;
+  border-color: #1a1a2e;
+}
+
+.load-more-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  color: #555;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.load-more-btn:hover {
+  background: #f0f0f5;
+  border-color: #bbb;
+  color: #1a1a2e;
+}
+
+.load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .refresh-btn {
   background: none;
   border: 1px solid #ddd;
@@ -587,6 +631,28 @@ html, body {
 
   .history-toolbar-label {
     color: #666;
+  }
+
+  .author-filter {
+    background: #1a1a24;
+    border-color: #333;
+    color: #ddd;
+  }
+
+  .author-filter:focus {
+    border-color: #6666aa;
+  }
+
+  .load-more-btn {
+    background: #1a1a24;
+    border-color: #333;
+    color: #999;
+  }
+
+  .load-more-btn:hover {
+    background: #222230;
+    border-color: #555;
+    color: #ddd;
   }
 
   .refresh-btn {

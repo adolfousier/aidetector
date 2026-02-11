@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import type { ExtensionSettings, HistoryItem } from "../shared/types";
-import { getSettings, updateSettings, getHistory } from "../shared/messaging";
+import { getSettings, updateSettings, getHistory, getAuthors } from "../shared/messaging";
 import { ScoreCard } from "./components/ScoreCard";
 import { Settings } from "./components/Settings";
 
 type Tab = "history" | "status" | "settings";
+const PAGE_SIZE = 20;
 
 export function App() {
   const [tab, setTab] = useState<Tab>("history");
@@ -15,13 +16,17 @@ export function App() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [authors, setAuthors] = useState<string[]>([]);
+  const [selectedAuthor, setSelectedAuthor] = useState("");
   const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const toastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadSettings();
-    loadHistory();
-    refreshRef.current = setInterval(loadHistory, 5000);
+    loadHistory(true);
+    loadAuthors();
+    refreshRef.current = setInterval(() => loadHistory(true), 10000);
     return () => {
       if (refreshRef.current) clearInterval(refreshRef.current);
     };
@@ -65,10 +70,29 @@ export function App() {
     }
   }
 
-  async function loadHistory() {
+  async function loadAuthors() {
     try {
-      const h = await getHistory();
-      setHistory(h.items);
+      const a = await getAuthors();
+      setAuthors(a);
+    } catch {
+      // silent
+    }
+  }
+
+  async function loadHistory(reset = false, authorFilter?: string) {
+    const author = authorFilter !== undefined ? authorFilter : selectedAuthor;
+    const offset = reset ? 0 : history.length;
+    try {
+      const h = await getHistory({
+        limit: PAGE_SIZE,
+        offset,
+        author: author || undefined,
+      });
+      if (reset) {
+        setHistory(h.items);
+      } else {
+        setHistory((prev) => [...prev, ...h.items]);
+      }
       setHistoryTotal(h.total);
     } catch {
       // silent
@@ -77,14 +101,28 @@ export function App() {
 
   async function handleRefresh() {
     setRefreshing(true);
-    await loadHistory();
+    await loadHistory(true);
+    await loadAuthors();
     setTimeout(() => setRefreshing(false), 400);
+  }
+
+  async function handleLoadMore() {
+    setLoading(true);
+    await loadHistory(false);
+    setLoading(false);
+  }
+
+  async function handleAuthorChange(author: string) {
+    setSelectedAuthor(author);
+    await loadHistory(true, author);
   }
 
   function openFullscreen() {
     const url = chrome.runtime.getURL("popup.html");
     chrome.tabs.create({ url });
   }
+
+  const hasMore = history.length < historyTotal;
 
   return (
     <div className="popup">
@@ -141,7 +179,16 @@ export function App() {
         {tab === "history" && (
           <div className="history-panel">
             <div className="history-toolbar">
-              <span className="history-toolbar-label">{historyTotal} results</span>
+              <select
+                className="author-filter"
+                value={selectedAuthor}
+                onChange={(e) => handleAuthorChange(e.target.value)}
+              >
+                <option value="">All authors ({historyTotal})</option>
+                {authors.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
               <button
                 className={`refresh-btn${refreshing ? " spinning" : ""}`}
                 onClick={handleRefresh}
@@ -151,13 +198,28 @@ export function App() {
               </button>
             </div>
             {history.length === 0 ? (
-              <p className="empty">No analyses yet — browse X, Instagram, or LinkedIn</p>
+              <p className="empty">
+                {selectedAuthor
+                  ? `No results for ${selectedAuthor}`
+                  : "No analyses yet — browse X, Instagram, or LinkedIn"}
+              </p>
             ) : (
-              <div className="history-list">
-                {history.map((item) => (
-                  <ScoreCard key={item.id} item={item} />
-                ))}
-              </div>
+              <>
+                <div className="history-list">
+                  {history.map((item) => (
+                    <ScoreCard key={item.id} item={item} />
+                  ))}
+                </div>
+                {hasMore && (
+                  <button
+                    className="load-more-btn"
+                    onClick={handleLoadMore}
+                    disabled={loading}
+                  >
+                    {loading ? "Loading..." : `Load more (${history.length} of ${historyTotal})`}
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}

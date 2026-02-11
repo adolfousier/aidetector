@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.12] - 2026-02-11
+
+### Added
+- History pagination with "Load more" button (20 items per page)
+- Author filter dropdown to filter history by username
+- `/api/authors` endpoint returning distinct authors
+- `author` query parameter on `/api/history` for server-side filtering
+- New rounded extension icon
+
+### Changed
+- Refresh button now also reloads the author list
+- Auto-refresh interval increased from 5s to 10s
+
 ## [0.1.11] - 2026-02-11
 
 ### Added

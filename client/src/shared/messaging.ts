@@ -2,6 +2,7 @@ import type {
   AnalyzeRequest,
   AnalyzeResponse,
   ExtensionSettings,
+  HistoryQuery,
   HistoryResponse,
   MessageType,
   MessageResponse,
@@ -46,10 +47,18 @@ export async function updateSettings(
   return response.data as ExtensionSettings;
 }
 
-export async function getHistory(): Promise<HistoryResponse> {
-  const response = await sendMessage({ type: "GET_HISTORY" });
+export async function getHistory(query?: HistoryQuery): Promise<HistoryResponse> {
+  const response = await sendMessage({ type: "GET_HISTORY", payload: query });
   if (!response.success) {
     throw new Error(response.error);
   }
   return response.data as HistoryResponse;
+}
+
+export async function getAuthors(): Promise<string[]> {
+  const response = await sendMessage({ type: "GET_AUTHORS" });
+  if (!response.success) {
+    throw new Error(response.error);
+  }
+  return response.data as string[];
 }

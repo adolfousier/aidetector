@@ -13,7 +13,14 @@ pub async fn history(
     let limit = query.limit.unwrap_or(20).min(100);
     let offset = query.offset.unwrap_or(0);
 
-    let (items, total) = db::get_history(&state.db, limit, offset).await?;
+    let (items, total) = db::get_history(&state.db, limit, offset, query.author.as_deref()).await?;
 
     Ok(Json(HistoryResponse { items, total }))
+}
+
+pub async fn authors(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<String>>, AppError> {
+    let authors = db::get_authors(&state.db).await?;
+    Ok(Json(authors))
 }

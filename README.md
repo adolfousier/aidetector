@@ -201,8 +201,17 @@ Requires `x-api-key` header if `API_KEY` is set.
 
 Labels: `human` (0-3), `mixed` (4-5), `likely_ai` (6-7), `ai` (8-10)
 
-### `GET /api/history?limit=20&offset=0`
+### `GET /api/history?limit=20&offset=0&author=username`
 Paginated analysis history. Requires `x-api-key` header if `API_KEY` is set.
+
+| Parameter | Description |
+|---|---|
+| `limit` | Max items to return (default: 20, max: 100) |
+| `offset` | Skip N items for pagination |
+| `author` | Filter by author username |
+
+### `GET /api/authors`
+Returns distinct author usernames. Requires `x-api-key` header if `API_KEY` is set.
 
 ## Detection Pipeline
 

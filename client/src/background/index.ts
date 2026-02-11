@@ -68,15 +68,21 @@ async function callApi(
 }
 
 async function fetchHistory(
-  settings: ExtensionSettings
+  settings: ExtensionSettings,
+  query?: { limit?: number; offset?: number; author?: string }
 ): Promise<HistoryResponse> {
   const headers: Record<string, string> = {};
   if (settings.apiKey) {
     headers["x-api-key"] = settings.apiKey;
   }
 
+  const params = new URLSearchParams();
+  params.set("limit", String(query?.limit ?? 20));
+  params.set("offset", String(query?.offset ?? 0));
+  if (query?.author) params.set("author", query.author);
+
   const response = await fetch(
-    `${settings.apiUrl}/api/history?limit=20&offset=0`,
+    `${settings.apiUrl}/api/history?${params}`,
     { headers }
   );
 
@@ -84,6 +90,19 @@ async function fetchHistory(
     throw new Error(`API error ${response.status}`);
   }
 
+  return response.json();
+}
+
+async function fetchAuthors(settings: ExtensionSettings): Promise<string[]> {
+  const headers: Record<string, string> = {};
+  if (settings.apiKey) {
+    headers["x-api-key"] = settings.apiKey;
+  }
+
+  const response = await fetch(`${settings.apiUrl}/api/authors`, { headers });
+  if (!response.ok) {
+    throw new Error(`API error ${response.status}`);
+  }
   return response.json();
 }
 
@@ -129,7 +148,12 @@ async function handleMessage(message: MessageType): Promise<MessageResponse> {
     }
     case "GET_HISTORY": {
       const settings = await getSettings();
-      const data = await fetchHistory(settings);
+      const data = await fetchHistory(settings, message.payload);
+      return { success: true, data };
+    }
+    case "GET_AUTHORS": {
+      const settings = await getSettings();
+      const data = await fetchAuthors(settings);
       return { success: true, data };
     }
   }

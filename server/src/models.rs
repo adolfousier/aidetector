@@ -62,6 +62,7 @@ pub struct AnalysisRecord {
 pub struct HistoryQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
+    pub author: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
