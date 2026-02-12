@@ -19,14 +19,22 @@ export function Settings({ settings, onUpdate, serverInfo }: Props) {
     <div className="settings-panel">
       {serverInfo && (
         <div className="server-info">
-          <div className="info-row">
-            <span className="info-label">Provider</span>
-            <span className="info-value">{serverInfo.provider}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">Model</span>
-            <span className="info-value">{serverInfo.model}</span>
-          </div>
+          {serverInfo.provider === "none" ? (
+            <div className="info-row">
+              <span className="info-value">Heuristics only (no LLM configured)</span>
+            </div>
+          ) : (
+            <>
+              <div className="info-row">
+                <span className="info-label">Provider</span>
+                <span className="info-value">{serverInfo.provider}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Model</span>
+                <span className="info-value">{serverInfo.model}</span>
+              </div>
+            </>
+          )}
         </div>
       )}
       <div className="field">

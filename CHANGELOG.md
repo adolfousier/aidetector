@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.14] - 2026-02-12
+
+### Added
+- Heuristics-only fallback when no LLM provider is configured (server no longer panics on startup)
+- `LlmProvider::None` variant — auto-detected when no API keys are set
+- Human informality detection in heuristics (slang, casual contractions, repeated punctuation)
+- Line-break formatting analysis (detects LinkedIn one-sentence-per-line AI pattern)
+- Promotional/motivational pattern detection (CTAs, hustle culture phrases, listicle openers)
+- 8 real-world unit tests from production data for heuristic engine
+- Extension shows "Heuristics only (no LLM configured)" when provider is `none`
+
+### Changed
+- Heuristic neutral baseline shifted from 2 (human) to 4-5 (uncertain) — fixes systematic underscoring
+- Heuristic engine now uses 10 weighted signals (up from 7)
+- Health endpoint returns `"provider": "none"` and `"model": null` when no LLM is configured
+- Heuristics-only mode caps confidence at 0.5 and sets `llm_score: null`
+
 ## [0.1.13] - 2026-02-12
 
 ### Added

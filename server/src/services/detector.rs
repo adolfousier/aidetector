@@ -99,24 +99,37 @@ pub async fn analyze(
         });
     }
 
-    // Run heuristic analysis and LLM analysis in parallel
+    // Run heuristic analysis (always needed)
     let heuristic_handle = {
         let text = request.content.clone();
         tokio::task::spawn_blocking(move || heuristics::analyze(&text))
     };
 
+    // Run LLM analysis if a provider is configured
     let llm_result = match config.llm_provider {
-        LlmProvider::Anthropic => anthropic::analyze(client, config, &request.content).await?,
-        LlmProvider::OpenRouter => openrouter::analyze(client, config, &request.content).await?,
+        LlmProvider::Anthropic => Some(anthropic::analyze(client, config, &request.content).await?),
+        LlmProvider::OpenRouter => Some(openrouter::analyze(client, config, &request.content).await?),
+        LlmProvider::None => {
+            tracing::debug!("No LLM provider configured — using heuristics only");
+            None
+        }
     };
     let heuristic_result = heuristic_handle
         .await
         .map_err(|e| AppError::Internal(format!("Heuristic analysis panicked: {e}")))?;
 
-    // Weighted: 60% LLM, 40% heuristic
-    let combined = (llm_result.score as f64 * 0.6 + heuristic_result.score as f64 * 0.4).round() as u8;
-    let final_score = combined.min(10);
-    let confidence = (llm_result.confidence * 0.7 + 0.3).min(1.0);
+    let (final_score, confidence, llm_score_val) = if let Some(llm) = &llm_result {
+        // Weighted: 60% LLM, 40% heuristic
+        let combined = (llm.score as f64 * 0.6 + heuristic_result.score as f64 * 0.4).round() as u8;
+        let score = combined.min(10);
+        let conf = (llm.confidence * 0.7 + 0.3).min(1.0);
+        (score, conf, Some(llm.score))
+    } else {
+        // Heuristics only — cap confidence at 0.5
+        let score = heuristic_result.score.min(10);
+        let conf = 0.5;
+        (score, conf, None)
+    };
 
     let label = score_to_label(final_score);
     let signals_json = serde_json::to_string(&heuristic_result.signals).unwrap_or_else(|_| "[]".to_string());
@@ -131,7 +144,7 @@ pub async fn analyze(
         score: final_score as i32,
         confidence,
         label: label.clone(),
-        llm_score: Some(llm_result.score as i32),
+        llm_score: llm_score_val.map(|s| s as i32),
         heuristic_score: heuristic_result.score as i32,
         signals: signals_json,
         created_at: chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -144,7 +157,7 @@ pub async fn analyze(
         confidence,
         label,
         breakdown: Breakdown {
-            llm_score: Some(llm_result.score),
+            llm_score: llm_score_val,
             heuristic_score: heuristic_result.score,
             signals: heuristic_result.signals,
         },

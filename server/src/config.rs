@@ -8,6 +8,7 @@ use std::path::PathBuf;
 pub enum LlmProvider {
     OpenRouter,
     Anthropic,
+    None,
 }
 
 #[derive(Clone)]
@@ -66,15 +67,14 @@ impl Config {
                 LlmProvider::OpenRouter
             }
             _ => {
-                // Auto-detect: prefer anthropic if configured, else openrouter
+                // Auto-detect: prefer anthropic if configured, else openrouter, else heuristics-only
                 if !anthropic_api_key.is_empty() {
                     LlmProvider::Anthropic
                 } else if !openrouter_api_key.is_empty() {
                     LlmProvider::OpenRouter
                 } else {
-                    panic!(
-                        "No LLM provider configured. Set ANTHROPIC_MAX_SETUP_TOKEN (or run `claude setup-token`) or OPENROUTER_API_KEY"
-                    );
+                    tracing::warn!("No LLM provider configured — running in heuristics-only mode. Set ANTHROPIC_MAX_SETUP_TOKEN or OPENROUTER_API_KEY to enable LLM analysis.");
+                    LlmProvider::None
                 }
             }
         };
