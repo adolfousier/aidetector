@@ -32,9 +32,9 @@ function getVariant(score: number): string {
   return "ai";
 }
 
-function getLabel(score: number): string {
+function getLabel(score: number, heuristicsOnly: boolean): string {
   if (score <= 3) return "Human";
-  if (score <= 6) return "Mixed";
+  if (score <= 6) return heuristicsOnly ? "Uncertain" : "Mixed";
   return "AI";
 }
 
@@ -73,8 +73,9 @@ function renderBadge(shadow: ShadowRoot, host: HTMLElement, result: AnalyzeRespo
   style.textContent = BADGE_CSS;
   shadow.appendChild(style);
 
+  const heuristicsOnly = result.breakdown.llm_score === null;
   const variant = getVariant(result.score);
-  const label = getLabel(result.score);
+  const label = getLabel(result.score, heuristicsOnly);
 
   const badge = document.createElement("span");
   badge.className = `aid-badge aid-badge--${variant}`;

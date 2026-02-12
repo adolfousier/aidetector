@@ -10,7 +10,7 @@ export interface AnalyzeRequest {
 export interface AnalyzeResponse {
   score: number;
   confidence: number;
-  label: "human" | "mixed" | "likely_ai" | "ai";
+  label: "human" | "mixed" | "likely_ai" | "ai" | "uncertain";
   breakdown: {
     llm_score: number | null;
     heuristic_score: number;
@@ -63,6 +63,7 @@ export type MessageType =
   | { type: "UPDATE_SETTINGS"; payload: Partial<ExtensionSettings> }
   | { type: "GET_HISTORY"; payload?: HistoryQuery }
   | { type: "GET_AUTHORS" }
+  | { type: "RESCAN" }
   | { type: "LOG"; payload: string };
 
 export type MessageResponse =

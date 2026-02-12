@@ -131,7 +131,8 @@ pub async fn analyze(
         (score, conf, None)
     };
 
-    let label = score_to_label(final_score);
+    let heuristics_only = llm_score_val.is_none();
+    let label = score_to_label(final_score, heuristics_only);
     let signals_json = serde_json::to_string(&heuristic_result.signals).unwrap_or_else(|_| "[]".to_string());
 
     // Store result

@@ -33,7 +33,7 @@ struct ContentBlock {
 pub async fn analyze(client: &Client, config: &Config, text: &str) -> Result<LlmResult, AppError> {
     if config.anthropic_api_key.is_empty() {
         return Err(AppError::LlmApi(
-            "Anthropic token not configured. Set ANTHROPIC_MAX_SETUP_TOKEN or run `claude setup-token`".to_string(),
+            "Anthropic token not configured. Set ANTHROPIC_API_KEY or ANTHROPIC_MAX_SETUP_TOKEN".to_string(),
         ));
     }
 

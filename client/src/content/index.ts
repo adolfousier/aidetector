@@ -131,6 +131,14 @@ async function init() {
 
   const platformModule = await loadPlatformModule(platform);
 
+  // Listen for rescan requests from popup
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type === "RESCAN") {
+      bgLog("Rescan triggered from popup");
+      scanAndProcess(platformModule);
+    }
+  });
+
   // Initial scan after a short delay to let the page load
   setTimeout(() => {
     bgLog("Running initial scan...");

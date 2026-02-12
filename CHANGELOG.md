@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.15] - 2026-02-12
+
+### Added
+- Refresh button in popup now triggers a re-scan of the active tab (X, Instagram, or LinkedIn)
+- `RESCAN` message type for popup-to-content-script communication
+- Regular Anthropic API key support (`ANTHROPIC_API_KEY`) alongside Max subscription tokens
+- `ANTHROPIC_API_MODEL` env var for API usage model selection
+- Em-dash hard floor: posts with em dashes (—/–) always score 8+ (definitive AI marker)
+- Em-dash unit test from production data
+- Disclaimer section in README covering ToS compliance for all platforms
+
+### Changed
+- Prior-based scoring: reduced human-leaning signal weights (variance, vocab, burstiness) from 1.0-1.5 to 0.5 so they don't dilute strong AI evidence
+- Em-dash signal weight increased from 3.5 to 5.0
+- Config auto-detect chain: `ANTHROPIC_MAX_SETUP_TOKEN` > `ANTHROPIC_API_KEY` > `~/.claude/auth-profiles.json`
+
 ## [0.1.14] - 2026-02-12
 
 ### Added

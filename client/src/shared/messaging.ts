@@ -62,3 +62,7 @@ export async function getAuthors(): Promise<string[]> {
   }
   return response.data as string[];
 }
+
+export async function rescan(): Promise<void> {
+  await sendMessage({ type: "RESCAN" });
+}

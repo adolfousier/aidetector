@@ -39,14 +39,18 @@ impl Config {
         let openrouter_api_key = env::var("OPENROUTER_API_KEY").unwrap_or_default();
         let openrouter_model = env::var("OPENROUTER_API_MODEL").unwrap_or_default();
 
-        // Anthropic config: env var first, then auth-profiles.json fallback
+        // Anthropic config: Max setup token > regular API key > auth-profiles.json fallback
         let anthropic_api_key = env::var("ANTHROPIC_MAX_SETUP_TOKEN")
             .ok()
             .filter(|s| !s.is_empty())
+            .or_else(|| env::var("ANTHROPIC_API_KEY").ok().filter(|s| !s.is_empty()))
             .or_else(read_claude_token)
             .unwrap_or_default();
-        let anthropic_model =
-            env::var("ANTHROPIC_MAX_MODEL").unwrap_or_else(|_| "claude-sonnet-4-5-20250929".to_string());
+        let anthropic_model = env::var("ANTHROPIC_MAX_MODEL")
+            .ok()
+            .filter(|s| !s.is_empty())
+            .or_else(|| env::var("ANTHROPIC_API_MODEL").ok().filter(|s| !s.is_empty()))
+            .unwrap_or_else(|| "claude-sonnet-4-5-20250929".to_string());
 
         // Provider selection: explicit flag > auto-detect
         let llm_provider = match env::var("PRIMARY_AI_PROVIDER")
@@ -56,7 +60,7 @@ impl Config {
         {
             "anthropic" | "claude" => {
                 if anthropic_api_key.is_empty() {
-                    panic!("PRIMARY_AI_PROVIDER=anthropic but no token found. Set ANTHROPIC_MAX_SETUP_TOKEN or run `claude setup-token`");
+                    panic!("PRIMARY_AI_PROVIDER=anthropic but no token found. Set ANTHROPIC_API_KEY or ANTHROPIC_MAX_SETUP_TOKEN");
                 }
                 LlmProvider::Anthropic
             }
@@ -73,7 +77,7 @@ impl Config {
                 } else if !openrouter_api_key.is_empty() {
                     LlmProvider::OpenRouter
                 } else {
-                    tracing::warn!("No LLM provider configured — running in heuristics-only mode. Set ANTHROPIC_MAX_SETUP_TOKEN or OPENROUTER_API_KEY to enable LLM analysis.");
+                    tracing::warn!("No LLM provider configured — running in heuristics-only mode. Set ANTHROPIC_API_KEY, ANTHROPIC_MAX_SETUP_TOKEN, or OPENROUTER_API_KEY to enable LLM analysis.");
                     LlmProvider::None
                 }
             }

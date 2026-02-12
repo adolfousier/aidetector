@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import type { ExtensionSettings, HistoryItem } from "../shared/types";
-import { getSettings, updateSettings, getHistory, getAuthors } from "../shared/messaging";
+import { getSettings, updateSettings, getHistory, getAuthors, rescan } from "../shared/messaging";
 import { ScoreCard } from "./components/ScoreCard";
 import { Settings } from "./components/Settings";
 
@@ -110,9 +110,14 @@ export function App() {
 
   async function handleRefresh() {
     setRefreshing(true);
-    await loadHistory(true);
-    await loadAuthors();
-    setTimeout(() => setRefreshing(false), 400);
+    // Trigger content script to scan new posts on the active tab
+    try { await rescan(); } catch { /* tab may not have content script */ }
+    // Wait a moment for analyses to complete, then reload history
+    setTimeout(async () => {
+      await loadHistory(true);
+      await loadAuthors();
+      setRefreshing(false);
+    }, 2000);
   }
 
   async function handleLoadMore() {

@@ -88,12 +88,24 @@ pub struct HistoryItem {
     pub created_at: String,
 }
 
-pub fn score_to_label(score: u8) -> String {
-    match score {
-        0..=3 => "human".to_string(),
-        4..=5 => "mixed".to_string(),
-        6..=7 => "likely_ai".to_string(),
-        8..=10 => "ai".to_string(),
-        _ => "unknown".to_string(),
+pub fn score_to_label(score: u8, heuristics_only: bool) -> String {
+    if heuristics_only {
+        // Without LLM, the 4-5 range is genuinely uncertain (no second opinion)
+        // but strong signals at extremes are still definitive
+        match score {
+            0..=3 => "human".to_string(),
+            4..=5 => "uncertain".to_string(),
+            6..=7 => "likely_ai".to_string(),
+            8..=10 => "ai".to_string(),
+            _ => "unknown".to_string(),
+        }
+    } else {
+        match score {
+            0..=3 => "human".to_string(),
+            4..=5 => "mixed".to_string(),
+            6..=7 => "likely_ai".to_string(),
+            8..=10 => "ai".to_string(),
+            _ => "unknown".to_string(),
+        }
     }
 }

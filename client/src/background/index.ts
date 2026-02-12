@@ -156,6 +156,13 @@ async function handleMessage(message: MessageType): Promise<MessageResponse> {
       const data = await fetchAuthors(settings);
       return { success: true, data };
     }
+    case "RESCAN": {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        await chrome.tabs.sendMessage(tab.id, { type: "RESCAN" });
+      }
+      return { success: true, data: {} as any };
+    }
   }
 }
 

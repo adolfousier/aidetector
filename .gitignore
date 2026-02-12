@@ -27,3 +27,7 @@ Thumbs.db
 
 # Tasks (local only)
 tasks/
+
+# DB
+data.db
+server/data.db

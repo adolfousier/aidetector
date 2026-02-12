@@ -164,144 +164,144 @@ const PROMOTIONAL_PATTERNS: &[&str] = &[
 
 pub fn analyze(text: &str) -> HeuristicResult {
     let mut signals = Vec::new();
-    let mut score_sum: f64 = 0.0;
-    let mut weight_sum: f64 = 0.0;
+
+    // Prior-based scoring: start with a human-leaning base.
+    // Only signals that actually detect something (AI or human) get to vote.
+    // "No evidence" = no vote, so the prior dominates for neutral text.
+    let mut score_sum: f64 = 3.0 * 1.5; // human-leaning prior, light weight so signals dominate
+    let mut weight_sum: f64 = 1.5;
 
     // 1. Sentence length variance (AI tends to write uniform sentence lengths)
-    //    Neutral baseline: 4.0 (no evidence either way)
     let sentence_variance = sentence_length_variance(text);
-    let sv_score = if sentence_variance < 5.0 {
+    if sentence_variance < 5.0 {
         signals.push("uniform_sentence_length".to_string());
-        8.0
+        score_sum += 8.0 * 2.0;
+        weight_sum += 2.0;
     } else if sentence_variance < 15.0 {
         signals.push("low_sentence_variance".to_string());
-        6.0
+        score_sum += 5.0 * 1.5;
+        weight_sum += 1.5;
     } else if sentence_variance > 50.0 {
-        2.0 // very varied = human
-    } else {
-        4.0
-    };
-    score_sum += sv_score * 2.0;
-    weight_sum += 2.0;
+        // Very varied = weak human signal (shouldn't overpower hard AI evidence)
+        score_sum += 2.0 * 0.5;
+        weight_sum += 0.5;
+    }
+    // 15-50: no opinion, skip
 
     // 2. Vocabulary diversity (Type-Token Ratio)
-    //    High diversity is slightly human-leaning
     let ttr = type_token_ratio(text);
-    let ttr_score = if ttr < 0.4 {
+    if ttr < 0.4 {
         signals.push("low_vocabulary_diversity".to_string());
-        7.0
-    } else if ttr < 0.55 {
-        5.0
-    } else {
-        3.0 // diverse vocab leans human
-    };
-    score_sum += ttr_score * 1.5;
-    weight_sum += 1.5;
+        score_sum += 7.0 * 1.5;
+        weight_sum += 1.5;
+    } else if ttr >= 0.55 {
+        // Diverse vocab = weak human signal
+        score_sum += 2.0 * 0.5;
+        weight_sum += 0.5;
+    }
+    // 0.4-0.55: neutral, skip
 
     // 3. Burstiness (AI text tends to have low burstiness — uniform flow)
-    //    High burstiness is a genuine human signal, keep at 2.0
     let burstiness = compute_burstiness(text);
-    let burst_score = if burstiness < 0.3 {
+    if burstiness < 0.3 {
         signals.push("low_burstiness".to_string());
-        7.0
-    } else if burstiness < 0.5 {
-        5.0
-    } else {
-        2.0 // bursty = human
-    };
-    score_sum += burst_score * 1.5;
-    weight_sum += 1.5;
+        score_sum += 7.0 * 1.5;
+        weight_sum += 1.5;
+    } else if burstiness >= 0.5 {
+        // Bursty = weak human signal
+        score_sum += 2.0 * 0.5;
+        weight_sum += 0.5;
+    }
+    // 0.3-0.5: neutral, skip
 
-    // 4. Formulaic phrase detection
-    //    No phrases = neutral (4.0), not "definitely human"
+    // 4. Formulaic phrase detection (strong AI signal when present)
     let formula_count = count_formulaic_phrases(text);
-    let formula_score = if formula_count >= 3 {
+    if formula_count >= 3 {
         signals.push("formulaic_phrases".to_string());
-        9.0
+        score_sum += 9.0 * 3.0;
+        weight_sum += 3.0;
     } else if formula_count >= 1 {
         signals.push("some_formulaic_phrases".to_string());
-        6.0
-    } else {
-        4.0
-    };
-    score_sum += formula_score * 2.5;
-    weight_sum += 2.5;
+        score_sum += 6.0 * 2.0;
+        weight_sum += 2.0;
+    }
+    // 0: no phrases found, skip — absence doesn't prove human
 
-    // 5. Dash detection (em dash, en dash — strong AI indicator)
-    let dash_count = count_dashes(text);
-    let dash_score = if dash_count >= 3 {
-        signals.push("excessive_dashes".to_string());
-        9.0
-    } else if dash_count >= 1 {
-        signals.push("dash_usage".to_string());
-        6.0
-    } else {
-        4.0
-    };
-    score_sum += dash_score * 2.0;
-    weight_sum += 2.0;
+    // 5. Dash detection — split by type:
+    //    Em/en dashes (—/–): near-definitive AI, humans don't type these
+    //    Spaced hyphens (" - "): ~90% AI, humans write "like this or" not "like this - or"
+    let (unicode_dashes, spaced_hyphens) = count_dashes_split(text);
+    if unicode_dashes >= 1 {
+        signals.push("em_en_dash".to_string());
+        // Almost certain AI — even 1 em dash is a dead giveaway
+        score_sum += 9.0 * 5.0;
+        weight_sum += 5.0;
+    }
+    if spaced_hyphens >= 1 {
+        signals.push("spaced_hyphen".to_string());
+        score_sum += 8.0 * 2.5;
+        weight_sum += 2.5;
+    }
+    // 0: skip
 
     // 6. AI vocabulary words (standalone words, not just phrases)
     let ai_word_count = count_ai_vocabulary(text);
-    let vocab_score = if ai_word_count >= 3 {
+    if ai_word_count >= 3 {
         signals.push("ai_vocabulary".to_string());
-        8.0
+        score_sum += 8.0 * 2.0;
+        weight_sum += 2.0;
     } else if ai_word_count >= 1 {
         signals.push("some_ai_vocabulary".to_string());
-        6.0
-    } else {
-        4.0
-    };
-    score_sum += vocab_score * 1.5;
-    weight_sum += 1.5;
+        score_sum += 6.0 * 1.5;
+        weight_sum += 1.5;
+    }
+    // 0: skip
 
     // 7. Punctuation patterns (AI uses more consistent punctuation)
-    let punct_score = punctuation_analysis(text, &mut signals);
-    score_sum += punct_score * 1.0;
-    weight_sum += 1.0;
+    let punct_result = punctuation_analysis(text, &mut signals);
+    if let Some(ps) = punct_result {
+        score_sum += ps * 1.0;
+        weight_sum += 1.0;
+    }
 
     // 8. Human informality markers (slang, casual language, !! / ??)
-    //    Strong human signal when present; absence leans AI
     let informality = count_informality(text);
-    let informal_score = if informality >= 3 {
+    if informality >= 3 {
         signals.push("informal_language".to_string());
-        1.0
+        score_sum += 1.0 * 3.0;
+        weight_sum += 3.0;
     } else if informality >= 1 {
         signals.push("some_informal_markers".to_string());
-        3.0
-    } else {
-        5.0 // no casual markers at all leans AI
-    };
-    score_sum += informal_score * 2.0;
-    weight_sum += 2.0;
+        score_sum += 2.0 * 2.0;
+        weight_sum += 2.0;
+    }
+    // 0: formal writing is ambiguous — many humans write formally. Skip.
 
     // 9. Line-break heavy formatting (LinkedIn AI: one sentence per line)
     let lb_ratio = linebreak_ratio(text);
-    let lb_score = if lb_ratio > 0.8 {
+    if lb_ratio > 0.8 {
         signals.push("line_per_sentence".to_string());
-        7.0
+        score_sum += 8.0 * 2.5;
+        weight_sum += 2.5;
     } else if lb_ratio > 0.5 {
         signals.push("heavy_line_breaks".to_string());
-        6.0
-    } else {
-        4.0
-    };
-    score_sum += lb_score * 1.5;
-    weight_sum += 1.5;
+        score_sum += 7.0 * 2.0;
+        weight_sum += 2.0;
+    }
+    // low: skip
 
     // 10. Promotional / motivational patterns (social media AI)
     let promo_count = count_promotional(text);
-    let promo_score = if promo_count >= 2 {
+    if promo_count >= 2 {
         signals.push("promotional_pattern".to_string());
-        8.0
+        score_sum += 9.0 * 2.5;
+        weight_sum += 2.5;
     } else if promo_count >= 1 {
         signals.push("some_promotional".to_string());
-        6.0
-    } else {
-        4.0
-    };
-    score_sum += promo_score * 1.5;
-    weight_sum += 1.5;
+        score_sum += 6.0 * 1.5;
+        weight_sum += 1.5;
+    }
+    // 0: skip
 
     // 11. Text too short for reliable analysis
     let word_count = text.split_whitespace().count();
@@ -309,11 +309,12 @@ pub fn analyze(text: &str) -> HeuristicResult {
         signals.push("short_text_low_confidence".to_string());
     }
 
-    let final_score = if weight_sum > 0.0 {
-        (score_sum / weight_sum).round() as u8
-    } else {
-        5
-    };
+    let mut final_score = (score_sum / weight_sum).round() as u8;
+
+    // Em dashes are definitive AI — enforce minimum score
+    if unicode_dashes >= 1 && final_score < 8 {
+        final_score = 8;
+    }
 
     HeuristicResult {
         score: final_score.min(10),
@@ -391,18 +392,17 @@ fn count_formulaic_phrases(text: &str) -> usize {
         .count()
 }
 
-fn count_dashes(text: &str) -> usize {
-    let mut count = 0;
+/// Returns (unicode_dashes, spaced_hyphens) counted separately.
+/// Unicode em/en dashes are near-definitive AI. Spaced hyphens are strong AI indicators.
+fn count_dashes_split(text: &str) -> (usize, usize) {
+    let mut unicode = 0;
     for ch in text.chars() {
-        // Em dash (—), en dash (–)
         if ch == '\u{2014}' || ch == '\u{2013}' {
-            count += 1;
+            unicode += 1;
         }
     }
-    // Also detect spaced hyphens like " - " or " -- " (surrogate em dashes)
-    count += text.matches(" - ").count();
-    count += text.matches(" -- ").count();
-    count
+    let spaced = text.matches(" - ").count() + text.matches(" -- ").count();
+    (unicode, spaced)
 }
 
 fn count_ai_vocabulary(text: &str) -> usize {
@@ -414,7 +414,8 @@ fn count_ai_vocabulary(text: &str) -> usize {
         .count()
 }
 
-fn punctuation_analysis(text: &str, signals: &mut Vec<String>) -> f64 {
+/// Returns Some(score) if a punctuation signal was detected, None if neutral.
+fn punctuation_analysis(text: &str, signals: &mut Vec<String>) -> Option<f64> {
     let sentences: Vec<&str> = text
         .split(|c: char| c == '.' || c == '!' || c == '?')
         .map(|s| s.trim())
@@ -422,33 +423,33 @@ fn punctuation_analysis(text: &str, signals: &mut Vec<String>) -> f64 {
         .collect();
 
     if sentences.len() < 3 {
-        return 4.0;
+        return None;
     }
 
-    // Check if almost all sentences end with periods (low variety)
     let total_terminators = text.chars().filter(|c| *c == '.' || *c == '!' || *c == '?').count();
     if total_terminators == 0 {
-        return 4.0;
+        return None;
     }
 
+    // Almost all periods = uniform punctuation (AI signal)
     let period_ratio = text.chars().filter(|c| *c == '.').count() as f64 / total_terminators as f64;
     if period_ratio > 0.95 {
         signals.push("uniform_punctuation".to_string());
-        return 6.0;
+        return Some(6.0);
     }
 
-    // Check comma frequency (AI tends to use more commas)
+    // High comma frequency (AI signal)
     let comma_count = text.chars().filter(|c| *c == ',').count();
     let word_count = text.split_whitespace().count();
     if word_count > 0 {
         let comma_ratio = comma_count as f64 / word_count as f64;
         if comma_ratio > 0.15 {
             signals.push("high_comma_frequency".to_string());
-            return 6.0;
+            return Some(6.0);
         }
     }
 
-    4.0
+    None // neutral punctuation, no vote
 }
 
 /// Count human informality markers: slang, casual contractions, repeated punctuation.
@@ -684,5 +685,39 @@ mod tests {
                     Wine cellar accessed through a hatch in the floor, outdoor pool.";
         let result = analyze(text);
         assert!(result.score <= 5, "Real human Spain mountain post scored too high: {} (signals: {:?})", result.score, result.signals);
+    }
+
+    // --- Tests for posts that were incorrectly scoring 4 "uncertain" ---
+
+    #[test]
+    fn test_casual_short_posts_score_human() {
+        // These were all scoring 4 with the broken baseline-4 system
+        let casual_posts = [
+            "NUTELLA PANCAKES",
+            "Software engineering in 2026",
+            "full stack developer in 2026 be like",
+            "Discord age verification is looking good so far",
+            "I was anti-AI until I saw this",
+            "POV: Bro, last day at work, and he decides to ruin everything.",
+        ];
+        for post in &casual_posts {
+            let result = analyze(post);
+            assert!(result.score <= 3,
+                "Casual post should score human (<=3), got {} for {:?} (signals: {:?})",
+                result.score, post, result.signals);
+        }
+    }
+
+    #[test]
+    fn test_em_dash_flags_ai() {
+        // Em dash is a near-definitive AI marker — must score 7+
+        let text = ".@tensol_ai turns OpenClaw into full-time AI employees for your company. \
+                    They handle repetitive workflows across support, engineering, sales and more \
+                    — running 24/7 in a secure environment, connected to your tools, with full \
+                    context of your business. Congrats on the launch";
+        let result = analyze(text);
+        assert!(result.score >= 8,
+            "Em-dash post should score AI (>=8), got {} (signals: {:?})",
+            result.score, result.signals);
     }
 }

@@ -30,7 +30,8 @@ function getPostUrl(item: HistoryItem): string | null {
 
 export function ScoreCard({ item }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const style = getScoreStyle(item.score);
+  const heuristicsOnly = item.llm_score === null;
+  const style = getScoreStyle(item.score, heuristicsOnly);
   const signals: string[] = (() => {
     try { return JSON.parse(item.signals); } catch { return []; }
   })();
