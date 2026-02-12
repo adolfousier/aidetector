@@ -1,6 +1,6 @@
 # AI Content Detector
 
-Chrome/Firefox extension that detects AI-generated content on X/Twitter, Instagram, and LinkedIn. Posts are analyzed using an LLM API (Anthropic Claude or OpenRouter) combined with heuristic analysis, and inline score badges are injected next to each post.
+Chrome/Firefox extension that detects AI-generated content on X/Twitter, Instagram, and LinkedIn. Posts are analyzed using an LLM API (Anthropic Claude or OpenRouter) combined with heuristic analysis, and inline score badges are injected next to each post. Works in heuristics-only mode when no LLM provider is configured.
 
 ## Table of Contents
 
@@ -47,9 +47,10 @@ Chrome/Firefox extension that detects AI-generated content on X/Twitter, Instagr
 - **Rust** (1.75+): https://rustup.rs
 - **Node.js** (18+): https://nodejs.org
 - **just** (command runner): https://just.systems (`cargo install just`)
-- **LLM Provider** (one of):
+- **LLM Provider** (optional, one of):
   - **Anthropic Claude** via [Claude Code](https://docs.anthropic.com/en/docs/claude-code) subscription — run `claude setup-token` in your terminal to generate a token
   - **OpenRouter API key** — https://openrouter.ai/keys
+  - **None** — the server runs in heuristics-only mode if no LLM keys are set (confidence capped at 0.5)
 
 ## Quick Start
 
@@ -94,7 +95,7 @@ OPENROUTER_API_KEY=sk-or-v1-your-key-here
 OPENROUTER_API_MODEL=qwen/qwen3-coder
 ```
 
-> If `PRIMARY_AI_PROVIDER` is not set, the server auto-detects based on which credentials are available (prefers Anthropic if both are set).
+> If `PRIMARY_AI_PROVIDER` is not set, the server auto-detects based on which credentials are available (prefers Anthropic if both are set). If no credentials are found, the server starts in **heuristics-only mode**.
 
 | Command | Description |
 |---|---|
@@ -170,10 +171,10 @@ Configure in `server/.env`:
 | `DATABASE_URL` | No (default: `sqlite:data.db`) | SQLite database path |
 | `API_KEY` | No | Extension auth key (leave empty to disable auth) |
 | `PRIMARY_AI_PROVIDER` | No | `anthropic` or `openrouter` (auto-detects if unset) |
-| `ANTHROPIC_MAX_SETUP_TOKEN` | If using Anthropic | Token from `claude setup-token` |
+| `ANTHROPIC_MAX_SETUP_TOKEN` | No | Token from `claude setup-token` |
 | `ANTHROPIC_MAX_MODEL` | No (default: `claude-sonnet-4-5-20250929`) | Anthropic model ID |
-| `OPENROUTER_API_KEY` | If using OpenRouter | Your OpenRouter API key |
-| `OPENROUTER_API_MODEL` | If using OpenRouter | LLM model (e.g. `qwen/qwen3-coder`) |
+| `OPENROUTER_API_KEY` | No | Your OpenRouter API key |
+| `OPENROUTER_API_MODEL` | No | LLM model (e.g. `qwen/qwen3-coder`) |
 
 ### Server
 
@@ -249,17 +250,22 @@ Returns distinct author usernames. Requires `x-api-key` header if `API_KEY` is s
 
 ## Detection Pipeline
 
-Two engines run in parallel per analysis:
+Two engines run in parallel per analysis (or heuristics-only when no LLM is configured):
 
 1. **LLM Analysis** (60% weight) — structured AI detection prompt via Anthropic Claude or OpenRouter
-2. **Heuristic Engine** (40% weight) — pure Rust statistical analysis:
-   - Sentence length variance
+2. **Heuristic Engine** (40% weight, or 100% in heuristics-only mode) — pure Rust statistical analysis with 10 weighted signals:
+   - Sentence length variance (uniform = AI)
    - Type-token ratio / vocabulary diversity
-   - Burstiness measurement
-   - Formulaic phrase detection (35+ patterns)
+   - Burstiness measurement (uniform flow = AI)
+   - Formulaic phrase detection (65+ patterns)
+   - Em dash / en dash usage
+   - AI vocabulary detection (21 standalone words)
    - Punctuation pattern analysis
+   - Human informality markers (slang, casual contractions, `!!`/`??`)
+   - Line-break formatting (LinkedIn one-sentence-per-line pattern)
+   - Promotional / motivational pattern detection (CTAs, hustle culture, listicle openers)
 
-Results cached by content hash in SQLite.
+In heuristics-only mode, confidence is capped at 0.5 and `llm_score` is `null`. Results cached by content hash in SQLite.
 
 ## Project Structure
 
