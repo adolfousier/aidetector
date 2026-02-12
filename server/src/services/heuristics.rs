@@ -7,34 +7,39 @@ pub struct HeuristicResult {
 }
 
 const FORMULAIC_PHRASES: &[&str] = &[
+    // Classic AI filler
     "in today's world",
     "it's important to note",
     "it is important to note",
+    "it's worth noting",
+    "it is worth noting",
     "in conclusion",
-    "delve into",
-    "dive into",
-    "let's explore",
-    "game changer",
-    "game-changer",
+    "to sum up",
+    "all things considered",
     "at the end of the day",
-    "leverage",
-    "navigate the complexities",
     "in this article",
     "here's the thing",
     "without further ado",
-    "it's worth noting",
     "that being said",
     "having said that",
-    "comprehensive guide",
-    "revolutionize",
-    "cutting-edge",
-    "seamlessly",
-    "furthermore",
-    "moreover",
+    "let's dive in",
+    "dive into",
+    "delve into",
+    "let's explore",
+    "in the world of",
     "in the realm of",
+    "in light of",
+    "to some extent",
+    "in many cases",
+    "it can be argued",
+    "studies have shown",
+    "experts agree",
+    // Buzzwords
+    "game changer",
+    "game-changer",
+    "cutting-edge",
     "paradigm shift",
     "holistic approach",
-    "synergy",
     "thought leader",
     "value proposition",
     "best practices",
@@ -42,6 +47,56 @@ const FORMULAIC_PHRASES: &[&str] = &[
     "unpack this",
     "at its core",
     "it goes without saying",
+    "comprehensive guide",
+    "treasure trove",
+    "tapestry of",
+    "daunting task",
+    // AI vocabulary
+    "leverage",
+    "revolutionize",
+    "seamlessly",
+    "furthermore",
+    "moreover",
+    "additionally",
+    "subsequently",
+    "navigate the complexities",
+    "supercharge",
+    "unleash",
+    "unlock",
+    "harness",
+    "robust",
+    "transformative",
+    "synergy",
+    "confluence",
+    "pivotal",
+    "myriad",
+    "plethora",
+    "arguably",
+];
+
+/// AI-associated standalone words — checked as whole words, case-insensitive.
+const AI_VOCABULARY: &[&str] = &[
+    "underpinning",
+    "trajectory",
+    "spectrum",
+    "facet",
+    "intricacies",
+    "iterative",
+    "nuanced",
+    "holistic",
+    "dynamic",
+    "framework",
+    "comprehensive",
+    "innovative",
+    "bustling",
+    "remarkable",
+    "excitingly",
+    "turbocharging",
+    "unveiling",
+    "harnessing",
+    "revolutionizing",
+    "unleashing",
+    "unlocking",
 ];
 
 pub fn analyze(text: &str) -> HeuristicResult {
@@ -104,12 +159,40 @@ pub fn analyze(text: &str) -> HeuristicResult {
     score_sum += formula_score * 2.5;
     weight_sum += 2.5;
 
-    // 5. Punctuation patterns (AI uses more consistent punctuation)
+    // 5. Dash detection (em dash, en dash — strong AI indicator)
+    let dash_count = count_dashes(text);
+    let dash_score = if dash_count >= 3 {
+        signals.push("excessive_dashes".to_string());
+        9.0
+    } else if dash_count >= 1 {
+        signals.push("dash_usage".to_string());
+        6.0
+    } else {
+        2.0
+    };
+    score_sum += dash_score * 2.0;
+    weight_sum += 2.0;
+
+    // 6. AI vocabulary words (standalone words, not just phrases)
+    let ai_word_count = count_ai_vocabulary(text);
+    let vocab_score = if ai_word_count >= 3 {
+        signals.push("ai_vocabulary".to_string());
+        8.0
+    } else if ai_word_count >= 1 {
+        signals.push("some_ai_vocabulary".to_string());
+        5.0
+    } else {
+        2.0
+    };
+    score_sum += vocab_score * 1.5;
+    weight_sum += 1.5;
+
+    // 7. Punctuation patterns (AI uses more consistent punctuation)
     let punct_score = punctuation_analysis(text, &mut signals);
     score_sum += punct_score * 1.0;
     weight_sum += 1.0;
 
-    // 6. Text too short for reliable analysis
+    // 8. Text too short for reliable analysis
     let word_count = text.split_whitespace().count();
     if word_count < 20 {
         signals.push("short_text_low_confidence".to_string());
@@ -195,6 +278,29 @@ fn count_formulaic_phrases(text: &str) -> usize {
     FORMULAIC_PHRASES
         .iter()
         .filter(|phrase| lower.contains(**phrase))
+        .count()
+}
+
+fn count_dashes(text: &str) -> usize {
+    let mut count = 0;
+    for ch in text.chars() {
+        // Em dash (—), en dash (–)
+        if ch == '\u{2014}' || ch == '\u{2013}' {
+            count += 1;
+        }
+    }
+    // Also detect spaced hyphens like " - " or " -- " (surrogate em dashes)
+    count += text.matches(" - ").count();
+    count += text.matches(" -- ").count();
+    count
+}
+
+fn count_ai_vocabulary(text: &str) -> usize {
+    let lower = text.to_lowercase();
+    let words: Vec<&str> = lower.split(|c: char| !c.is_alphanumeric()).filter(|w| !w.is_empty()).collect();
+    AI_VOCABULARY
+        .iter()
+        .filter(|vocab| words.iter().any(|w| *w == **vocab))
         .count()
 }
 

@@ -1,6 +1,6 @@
 # AI Content Detector
 
-Chrome/Firefox extension + Rust backend that detects AI-generated content on X/Twitter, Instagram, and LinkedIn. Posts are analyzed using OpenRouter LLM API combined with local heuristic analysis, and inline score badges are injected next to each post.
+Chrome/Firefox extension that detects AI-generated content on X/Twitter, Instagram, and LinkedIn. Posts are analyzed using an LLM API (Anthropic Claude or OpenRouter) combined with heuristic analysis, and inline score badges are injected next to each post.
 
 ## Table of Contents
 
@@ -33,12 +33,12 @@ Chrome/Firefox extension + Rust backend that detects AI-generated content on X/T
 
 ```
 ┌─────────────────────┐     POST /api/analyze     ┌──────────────────────┐
-│  Browser Extension   │ ──────────────────────►   │  Rust/Axum Server    │
+│  Browser Extension   │ ──────────────────────►   │  Server              │
 │                      │                           │                      │
-│  Content Scripts     │     { score, label,       │  OpenRouter LLM API  │
-│  (X, IG, LinkedIn)  │ ◄──────────────────────   │  + Heuristic Engine  │
-│                      │       breakdown }         │  + SQLite Cache      │
-│  Popup UI (React)    │                           │                      │
+│  Content Scripts     │     { score, label,       │  Anthropic Claude    │
+│  (X, IG, LinkedIn)  │ ◄──────────────────────   │  or OpenRouter LLM   │
+│                      │       breakdown }         │  + Heuristic Engine  │
+│  Popup UI (React)    │                           │  + SQLite Cache      │
 └─────────────────────┘                           └──────────────────────┘
 ```
 
@@ -47,7 +47,9 @@ Chrome/Firefox extension + Rust backend that detects AI-generated content on X/T
 - **Rust** (1.75+): https://rustup.rs
 - **Node.js** (18+): https://nodejs.org
 - **just** (command runner): https://just.systems (`cargo install just`)
-- **OpenRouter API key**: https://openrouter.ai/keys
+- **LLM Provider** (one of):
+  - **Anthropic Claude** via [Claude Code](https://docs.anthropic.com/en/docs/claude-code) subscription — run `claude setup-token` in your terminal to generate a token
+  - **OpenRouter API key** — https://openrouter.ai/keys
 
 ## Quick Start
 
@@ -57,13 +59,42 @@ cd aidetector
 
 # Configure server env
 cp server/.env.example server/.env
-# Edit server/.env — set your OPENROUTER_API_KEY and OPENROUTER_API_MODEL
+# Edit server/.env — set your LLM provider (see Configuration below)
 
 # Build everything and start the server
 just
 ```
 
 `just` (or `just run`) installs npm dependencies, builds the client extension, compiles the Rust server, and starts it.
+
+### Configuration
+
+Edit `server/.env` to choose your LLM provider. You can use **Anthropic Claude** or **OpenRouter** (or both — the server picks one based on `PRIMARY_AI_PROVIDER`).
+
+#### Option A: Anthropic Claude (via Claude Code subscription)
+
+1. Open a terminal where [Claude Code](https://docs.anthropic.com/en/docs/claude-code) is installed
+2. Run `claude setup-token` and follow the prompts to generate a long-lived API token
+3. Copy the token into your `.env`:
+
+```env
+PRIMARY_AI_PROVIDER=anthropic
+ANTHROPIC_MAX_SETUP_TOKEN=sk-ant-oat01-your-token-here
+ANTHROPIC_MAX_MODEL=claude-sonnet-4-5-20250929
+```
+
+#### Option B: OpenRouter
+
+1. Get an API key from https://openrouter.ai/keys
+2. Set it in your `.env`:
+
+```env
+PRIMARY_AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+OPENROUTER_API_MODEL=qwen/qwen3-coder
+```
+
+> If `PRIMARY_AI_PROVIDER` is not set, the server auto-detects based on which credentials are available (prefers Anthropic if both are set).
 
 | Command | Description |
 |---|---|
@@ -137,9 +168,12 @@ Configure in `server/.env`:
 |---|---|---|
 | `PORT` | No (default: `3000`) | Server port |
 | `DATABASE_URL` | No (default: `sqlite:data.db`) | SQLite database path |
-| `OPENROUTER_API_KEY` | **Yes** | Your OpenRouter API key |
-| `OPENROUTER_API_MODEL` | **Yes** | LLM model (e.g. `qwen/qwen3-coder`) |
 | `API_KEY` | No | Extension auth key (leave empty to disable auth) |
+| `PRIMARY_AI_PROVIDER` | No | `anthropic` or `openrouter` (auto-detects if unset) |
+| `ANTHROPIC_MAX_SETUP_TOKEN` | If using Anthropic | Token from `claude setup-token` |
+| `ANTHROPIC_MAX_MODEL` | No (default: `claude-sonnet-4-5-20250929`) | Anthropic model ID |
+| `OPENROUTER_API_KEY` | If using OpenRouter | Your OpenRouter API key |
+| `OPENROUTER_API_MODEL` | If using OpenRouter | LLM model (e.g. `qwen/qwen3-coder`) |
 
 ### Server
 
@@ -217,7 +251,7 @@ Returns distinct author usernames. Requires `x-api-key` header if `API_KEY` is s
 
 Two engines run in parallel per analysis:
 
-1. **OpenRouter LLM** (60% weight) — structured AI detection prompt
+1. **LLM Analysis** (60% weight) — structured AI detection prompt via Anthropic Claude or OpenRouter
 2. **Heuristic Engine** (40% weight) — pure Rust statistical analysis:
    - Sentence length variance
    - Type-token ratio / vocabulary diversity
@@ -244,6 +278,7 @@ server/                    Rust/Axum backend
 │   │   └── history.rs     GET /api/history
 │   └── services/
 │       ├── detector.rs    LLM + heuristics orchestration
+│       ├── anthropic.rs   Anthropic Claude API client
 │       ├── openrouter.rs  OpenRouter API client
 │       └── heuristics.rs  Statistical text analysis
 ├── migrations/

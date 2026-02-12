@@ -4,9 +4,10 @@ import type { ExtensionSettings } from "../../shared/types";
 interface Props {
   settings: ExtensionSettings;
   onUpdate: (updates: Partial<ExtensionSettings>) => void;
+  serverInfo: { provider: string; model: string } | null;
 }
 
-export function Settings({ settings, onUpdate }: Props) {
+export function Settings({ settings, onUpdate, serverInfo }: Props) {
   const [apiUrl, setApiUrl] = useState(settings.apiUrl);
   const [apiKey, setApiKey] = useState(settings.apiKey);
 
@@ -16,6 +17,18 @@ export function Settings({ settings, onUpdate }: Props) {
 
   return (
     <div className="settings-panel">
+      {serverInfo && (
+        <div className="server-info">
+          <div className="info-row">
+            <span className="info-label">Provider</span>
+            <span className="info-value">{serverInfo.provider}</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Model</span>
+            <span className="info-value">{serverInfo.model}</span>
+          </div>
+        </div>
+      )}
       <div className="field">
         <label>Server URL</label>
         <input

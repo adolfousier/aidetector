@@ -9,7 +9,7 @@ pub enum AppError {
     Unauthorized,
     Internal(String),
     Database(sqlx::Error),
-    OpenRouter(String),
+    LlmApi(String),
 }
 
 impl IntoResponse for AppError {
@@ -22,8 +22,8 @@ impl IntoResponse for AppError {
                 tracing::error!("Database error: {e}");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
             }
-            AppError::OpenRouter(msg) => {
-                tracing::error!("OpenRouter error: {msg}");
+            AppError::LlmApi(msg) => {
+                tracing::error!("LLM API error: {msg}");
                 (StatusCode::BAD_GATEWAY, format!("LLM API error: {msg}"))
             }
         };

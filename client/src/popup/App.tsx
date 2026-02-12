@@ -13,6 +13,7 @@ export function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+  const [serverInfo, setServerInfo] = useState<{ provider: string; model: string } | null>(null);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -51,9 +52,17 @@ export function App() {
   async function checkServer(apiUrl: string) {
     try {
       const resp = await fetch(`${apiUrl}/api/health`);
-      setServerOnline(resp.ok);
+      if (resp.ok) {
+        const data = await resp.json();
+        setServerOnline(true);
+        setServerInfo({ provider: data.provider, model: data.model });
+      } else {
+        setServerOnline(false);
+        setServerInfo(null);
+      }
     } catch {
       setServerOnline(false);
+      setServerInfo(null);
     }
   }
 
@@ -266,7 +275,7 @@ export function App() {
         )}
 
         {tab === "settings" && settings && (
-          <Settings settings={settings} onUpdate={handleSettingsUpdate} />
+          <Settings settings={settings} onUpdate={handleSettingsUpdate} serverInfo={serverInfo} />
         )}
       </main>
     </div>

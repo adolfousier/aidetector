@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.1.13] - 2026-02-12
+
+### Added
+- Anthropic Claude API support as alternative LLM provider (via `claude setup-token`)
+- Auto-discovery of Claude token from `~/.claude/auth-profiles.json`
+- `PRIMARY_AI_PROVIDER` env var to select between `anthropic` and `openrouter`
+- Active provider and model displayed in extension Settings tab
+- Health endpoint now returns `provider` and `model` fields
+- Dash detection in heuristics (em dash, en dash, spaced hyphens)
+- AI vocabulary detection (21 standalone words matched as whole words)
+- GitHub Actions workflow for auto-assigning issues
+
+### Changed
+- LLM system prompt expanded with specific AI indicators (dashes, buzzwords, filler phrases, robotic patterns) and human indicators (slang, typos, personal voice)
+- Formulaic phrase list expanded from 35 to 65+ patterns
+- Error variant renamed from `OpenRouter` to `LlmApi` (provider-agnostic)
+- Shared `LlmResult`, `SYSTEM_PROMPT`, and score parsing logic across providers
+- `OPENROUTER_API_MODEL` no longer required when using Anthropic provider
+- README updated with dual-provider setup instructions
+
 ## [0.1.12] - 2026-02-11
 
 ### Added

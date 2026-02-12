@@ -500,6 +500,36 @@ html, body {
   gap: 16px;
 }
 
+.server-info {
+  background: #f0f4f8;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.info-label {
+  color: #888;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-size: 10px;
+}
+
+.info-value {
+  color: #1a1a2e;
+  font-weight: 600;
+  font-size: 12px;
+}
+
 .field label {
   display: block;
   font-size: 11px;
@@ -723,6 +753,18 @@ html, body {
   .signal-tag {
     background: #252530;
     color: #999;
+  }
+
+  .server-info {
+    background: #1e1e2a;
+  }
+
+  .info-label {
+    color: #666;
+  }
+
+  .info-value {
+    color: #ddd;
   }
 
   .field label {
