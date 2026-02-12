@@ -14,6 +14,7 @@ Chrome/Firefox extension that detects AI-generated content on X/Twitter, Instagr
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [Changelog](#changelog)
+- [Disclaimer](#disclaimer)
 - [License](#license)
 
 ## Screenshots
@@ -317,6 +318,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
+
+## Disclaimer
+
+This software is provided **for educational and research purposes only**. It analyzes publicly visible post content on supported platforms (X/Twitter, Instagram, LinkedIn) by reading the DOM of pages you visit in your browser.
+
+- **No API abuse**: The extension does not call any platform API, use your session tokens, or access private data. It only reads text that is already visible on your screen.
+- **User responsibility**: You are solely responsible for ensuring your use of this tool complies with the Terms of Service of each platform you use it on. Review the ToS of [X/Twitter](https://x.com/en/tos), [Instagram](https://help.instagram.com/581066165581870), and [LinkedIn](https://www.linkedin.com/legal/user-agreement) before use.
+- **Not for commercial use**: This project is not intended for commercial exploitation, data harvesting, or any activity that violates platform policies.
+- **No guarantees**: AI detection scores are probabilistic estimates, not definitive judgments. Do not use them as the sole basis for decisions about content or people.
+
+By using this software, you acknowledge and accept these terms.
 
 ## License
 
