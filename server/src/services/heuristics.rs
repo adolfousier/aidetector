@@ -101,9 +101,10 @@ const AI_VOCABULARY: &[&str] = &[
 
 /// Slang / abbreviations that humans use — checked as whole words.
 const HUMAN_SLANG: &[&str] = &[
-    "lol", "lmao", "rofl", "tbh", "fr", "smh", "ngl", "bruh", "omg", "wtf", "idk", "imo",
-    "imho", "fwiw", "afaik", "btw", "irl", "fomo", "goat", "nah", "yep", "yup", "haha",
-    "hehe", "oops", "ugh", "meh", "pls", "plz", "thx", "ty",
+    "lol", "lmao", "rofl", "tbh", "fr", "smh", "ngl", "bruh", "bro", "bros", "buddy",
+    "brah", "fam", "dude", "omg", "wtf", "idk", "imo", "imho", "fwiw", "afaik", "btw",
+    "irl", "fomo", "goat", "nah", "yep", "yup", "haha", "hehe", "oops", "ugh", "meh",
+    "pls", "plz", "thx", "ty",
 ];
 
 /// Casual contractions that signal human writing.
@@ -333,7 +334,7 @@ fn sentence_length_variance(text: &str) -> f64 {
         .filter(|s| !s.is_empty())
         .collect();
 
-    if sentences.len() < 2 {
+    if sentences.len() < 3 {
         return 50.0; // Not enough sentences to judge
     }
 
