@@ -315,6 +315,10 @@ pub fn analyze(text: &str) -> HeuristicResult {
     if unicode_dashes >= 1 && final_score < 8 {
         final_score = 8;
     }
+    // Spaced hyphens (" - "): 2+ is strong AI, enforce floor
+    if spaced_hyphens >= 2 && final_score < 7 {
+        final_score = 7;
+    }
 
     HeuristicResult {
         score: final_score.min(10),
@@ -710,7 +714,7 @@ mod tests {
 
     #[test]
     fn test_em_dash_flags_ai() {
-        // Em dash is a near-definitive AI marker — must score 7+
+        // Em dash is a definitive AI marker — must score 8+
         let text = ".@tensol_ai turns OpenClaw into full-time AI employees for your company. \
                     They handle repetitive workflows across support, engineering, sales and more \
                     — running 24/7 in a secure environment, connected to your tools, with full \
@@ -718,6 +722,18 @@ mod tests {
         let result = analyze(text);
         assert!(result.score >= 8,
             "Em-dash post should score AI (>=8), got {} (signals: {:?})",
+            result.score, result.signals);
+    }
+
+    #[test]
+    fn test_spaced_hyphen_flags_likely_ai() {
+        // Multiple spaced hyphens = strong AI marker, must score 7+
+        let text = "The future of work is changing - and it's happening faster than we think. \
+                    Companies need to adapt - or risk being left behind. The key is building \
+                    systems that scale - not just working harder.";
+        let result = analyze(text);
+        assert!(result.score >= 7,
+            "Multi-spaced-hyphen post should score likely_ai (>=7), got {} (signals: {:?})",
             result.score, result.signals);
     }
 }
